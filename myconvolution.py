@@ -2,96 +2,63 @@ import numpy as np  # Biblioteca para manejar matrices y cálculos numéricos
 import cv2  # OpenCV para manipulación de imágenes
 import matplotlib.pyplot as plt  # Matplotlib para visualizar las imágenes
 
-def convolution(image, kernel, average=False):
-    """
-    Aplica una convolución a una imagen en color sin convertirla a escala de grises.
-
-    Parámetros:
-    - image: Imagen en color (matriz 3D con canales RGB).
-    - kernel: Matriz 2D (filtro).
-    - average: Si es True, divide por el tamaño del kernel para suavizar.
-
-    Retorna:
-    - Imagen convolucionada con el mismo número de canales.
-    """
-
-    # Verifica si la imagen tiene 3 canales (RGB) o 1 canal (escala de grises)
-    if len(image.shape) == 3:
-        print("Imagen con 3 canales (RGB):", image.shape)
-    else:
-        print("Imagen con 1 canal (escala de grises):", image.shape)
-
-    print("Tamaño del Kernel:", kernel.shape)
-
+def convolution(image, kernel, average=False):    
     # Obtiene dimensiones de la imagen y del kernel
     image_row, image_col, num_channels = image.shape  # Alto, ancho y canales (R, G, B)
     kernel_row, kernel_col = kernel.shape  # Alto y ancho del kernel
-
-    # Calcula el padding para evitar pérdida de información en los bordes
-    pad_height = kernel_row // 2  # Padding vertical
-    pad_width = kernel_col // 2  # Padding horizontal
-
-    # Crea una imagen con padding (relleno con ceros alrededor)
-    padded_image = np.zeros((image_row + 2 * pad_height, image_col + 2 * pad_width, num_channels), dtype=np.float32)
     
-    # Copia la imagen original dentro de la imagen con padding
-    padded_image[pad_height:-pad_height, pad_width:-pad_width] = image
-
-    # Matriz de salida con el mismo tamaño de la imagen original
-    output = np.zeros_like(image, dtype=np.float32)
+    # Calcula las dimensiones de la imagen resultante, considerando que no se usará padding
+    output_row = image_row - kernel_row + 1  # Alto de la imagen de salida
+    output_col = image_col - kernel_col + 1  # Ancho de la imagen de salida
+    
+    # Inicializa la matriz de salida con ceros, del tamaño adecuado y el mismo número de canales
+    output = np.zeros((output_row, output_col, num_channels), dtype=np.float32)
 
     # Recorre cada canal de la imagen (R, G, B) para aplicar la convolución
-    for channel in range(num_channels):  # Iterar sobre los 3 canales de color
-        for row in range(image_row):  # Iterar sobre las filas de la imagen
-            for col in range(image_col):  # Iterar sobre las columnas de la imagen
-                # Extrae la región de la imagen correspondiente al tamaño del kernel
-                region = padded_image[row:row + kernel_row, col:col + kernel_col, channel]
+    for channel in range(num_channels):  # Itera sobre los canales de color (0: R, 1: G, 2: B)
+        for row in range(output_row):  # Recorre las filas válidas sin exceder los bordes
+            for col in range(output_col):  # Recorre las columnas válidas sin exceder los bordes
+                # Extrae una región de la imagen del mismo tamaño que el kernel
+                region = image[row:row + kernel_row, col:col + kernel_col, channel]
                 
-                # Aplica la convolución: multiplicación elemento a elemento y suma
+                # Realiza la multiplicación elemento a elemento entre la región y el kernel, y suma el resultado
                 output[row, col, channel] = np.sum(region * kernel)
 
-                # Si average es True, divide por el número de elementos del kernel
+                # Si average es True, divide por el número de elementos del kernel para suavizar
                 if average:
                     output[row, col, channel] /= (kernel.shape[0] * kernel.shape[1])
 
-    # Asegura que los valores estén dentro del rango válido de píxeles (0-255)
+    # Limita los valores de la matriz resultante al rango de píxeles [0, 255] y convierte a enteros sin signo (uint8)
     output = np.clip(output, 0, 255).astype(np.uint8)
 
-    print("Imagen de salida con tamaño:", output.shape)
+    return output  # Retorna la imagen convolucionada sin padding
 
-    return output  # Retorna la imagen convolucionada
+# Carga una imagen en color desde el archivo especificado (debe estar en el mismo directorio que el script)
+image = cv2.imread("Turquia.jpg")  # Lee la imagen en formato BGR que utiliza OpenCV por defecto
 
-# -------- Ejemplo de uso -------- #
-# Cargar una imagen en color desde el archivo (debe estar en el mismo directorio)
-image = cv2.imread("Turquia.jpg")  # Lee la imagen en formato BGR (OpenCV)
-
-# Definir un filtro (kernel) de detección de bordes (Sobel)
+# Define un kernel de detección de bordes (Sobel horizontal en este caso)
 sobel_kernel = np.array([
     [-1, 0, 1],
     [-2, 0, 2],
     [-1, 0, 1]
 ])
 
-# Aplicar convolución a la imagen con el kernel definido
+# Aplica la convolución a la imagen usando el kernel de Sobel
 output_image = convolution(image, sobel_kernel, average=False)
 
-# Mostrar la imagen original y la imagen convolucionada juntas
-plt.figure(figsize=(10, 5))  # Define el tamaño de la figura
+# Visualiza la imagen original y la imagen resultante tras la convolución
+plt.figure(figsize=(10, 5))  # Establece el tamaño del lienzo para mostrar las imágenes
 
-# Subplot para la imagen original
-plt.subplot(1, 2, 1)  # 1 fila, 2 columnas, primera imagen
-plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))  # Convierte de BGR a RGB para Matplotlib
-plt.title("Imagen Original")  # Título de la imagen original
+# Muestra la imagen original
+plt.subplot(1, 2, 1)  # Crea el primer subplot en una figura de 1 fila y 2 columnas
+plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))  # Convierte la imagen de BGR a RGB para mostrarla correctamente
+plt.title("Imagen Original")  # Asigna un título descriptivo
+plt.axis("off")  # Oculta los ejes para una presentación más limpia
+
+# Muestra la imagen convolucionada
+plt.subplot(1, 2, 2)  # Crea el segundo subplot
+plt.imshow(cv2.cvtColor(output_image, cv2.COLOR_BGR2RGB))  # Convierte y muestra la imagen resultante
+plt.title("Imagen Convolucionada")  # Asigna un título descriptivo
 plt.axis("off")  # Oculta los ejes
 
-# Subplot para la imagen convolucionada
-plt.subplot(1, 2, 2)  # 1 fila, 2 columnas, segunda imagen
-plt.imshow(cv2.cvtColor(output_image, cv2.COLOR_BGR2RGB))  # Convierte BGR a RGB
-plt.title("Imagen Convolucionada")  # Título de la imagen procesada
-plt.axis("off")  # Oculta los ejes
-
-plt.show()  # Muestra las dos imágenes en la misma figura
-
-# Guardar la imagen resultante en un archivo
-cv2.imwrite("imagen_convolucionada.jpg", output_image)  # Guarda la imagen convolucionada
-
+plt.show()  # Renderiza y muestra ambas imágenes en pantalla

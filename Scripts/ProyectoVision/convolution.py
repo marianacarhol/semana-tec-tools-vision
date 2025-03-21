@@ -55,3 +55,22 @@ def convolution(image, kernel, average=False, verbose=False):
         plt.show()
  
     return output
+
+if __name__ == "__main__":
+    # Carga la imagen (ajusta la ruta según corresponda)
+    imagen = cv2.imread(r"C:\\Users\\maria\\OneDrive\\Documentos\\laboratoriomariana\\semana-tec-tools-vision\\Turquia.jpg")
+    if imagen is None:
+        print("No se pudo cargar la imagen. Revisa la ruta.")
+    else:
+        # Define un kernel de ejemplo (aquí se usa el kernel de Sobel para detectar bordes verticales)
+        kernel = np.array([[-1, 0, 1],
+                           [-2, 0, 2],
+                           [-1, 0, 1]])
+        
+        # Aplica la función de convolución con verbose=True para ver los pasos intermedios
+        resultado = convolution(imagen, kernel, average=False, verbose=True)
+        
+        # Muestra el resultado final
+        plt.imshow(resultado, cmap='gray')
+        plt.title("Resultado de la Convolución")
+        plt.show()
