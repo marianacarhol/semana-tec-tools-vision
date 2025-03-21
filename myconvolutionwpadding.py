@@ -1,3 +1,12 @@
+# Mariana Carrillo Holguin
+# A01253358
+# MANUAL
+'''
+Para ejecutar el programa correctamente se debe:
+- Descargar previamente en la computadora el lenguaje Python y las librerías Numpy, CV2 y Matplotlib
+- En caso de que el programa no cargue la imagen "Turquia.jpg" correctamente, verifique que la ruta (path) de la imagen sea la adecuada. 
+'''
+
 import numpy as np  # Biblioteca para manejar matrices y cálculos numéricos
 import cv2  # OpenCV para manipulación de imágenes
 import matplotlib.pyplot as plt  # Matplotlib para visualizar las imágenes
